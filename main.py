@@ -3,6 +3,8 @@ import tkinter as tk
 from tkinter import messagebox
 import threading
 import time
+import matplotlib.pyplot as plt
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
 # Function to get the current Bitcoin price
 def get_bitcoin_price():
@@ -12,7 +14,7 @@ def get_bitcoin_price():
 
 # Function to update the price in the GUI
 def update_price():
-    global target_price, initial_price
+    global target_price, initial_price, prices, timestamps
     while True:
         current_price = get_bitcoin_price()
         percent_change = ((current_price - initial_price) / initial_price) * 100 if initial_price else 0
@@ -28,7 +30,23 @@ def update_price():
             else:
                 target_label.config(text=f"Prețul este exact la ${target_price:.2f}!")
 
+        # Update the chart data
+        prices.append(current_price)
+        timestamps.append(time.strftime("%H:%M:%S"))
+        update_chart()
+
         time.sleep(5)  # Update every 5 seconds
+
+# Function to update the chart
+def update_chart():
+    ax.clear()
+    ax.plot(timestamps, prices, label='Preț Bitcoin', color='blue')
+    ax.set_xlabel('Timp')
+    ax.set_ylabel('Preț (USD)')
+    ax.set_title('Bitcoin Price Live Chart')
+    ax.legend()
+    ax.set_xticklabels(timestamps, rotation=45, ha='right')
+    canvas.draw()
 
 # Function to set the target price
 def set_target():
@@ -70,6 +88,13 @@ target_label.pack()
 # Initialize global variables
 target_price = None
 initial_price = None
+prices = []
+timestamps = []
+
+# Create a figure for the chart
+fig, ax = plt.subplots(figsize=(5, 4))
+canvas = FigureCanvasTkAgg(fig, master=root)
+canvas.get_tk_widget().pack()
 
 # Start the price update thread
 price_thread = threading.Thread(target=update_price, daemon=True)
