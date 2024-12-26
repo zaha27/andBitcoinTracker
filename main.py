@@ -6,7 +6,6 @@ import time
 import plotly.graph_objs as go
 from plotly.subplots import make_subplots
 import plotly.io as pio
-from tkinter import Frame
 
 # Function to get the current Bitcoin price
 def get_bitcoin_price():
@@ -91,6 +90,9 @@ target_entry.pack(pady=(5, 10))  # Add padding for spacing
 set_button = tk.Button(root, text="Setează Prețul Țintă", command=set_target, bg='black', fg='lime', borderwidth=2, relief='solid')
 set_button.pack(pady=(5, 10))  # Add padding for spacing
 
+# Set the button's highlight properties to simulate a black border
+set_button.config(highlightbackground='black', highlightcolor='black', highlightthickness=2)
+
 price_label = tk.Label(root, text="Prețul curent al Bitcoin: $0.00", bg='black', fg='lime')
 price_label.pack(pady=(5, 0))
 
@@ -107,7 +109,7 @@ prices = []
 timestamps = []
 
 # Create a frame for the chart
-chart_frame = Frame(root)
+chart_frame = tk.Frame(root)
 chart_frame.pack()
 
 # Create a label for the chart
