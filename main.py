@@ -11,25 +11,29 @@ import plotly.io as pio
 def get_bitcoin_price():
     response = requests.get('https://api.coindesk.com/v1/bpi/currentprice/BTC.json')
     data = response.json()
-    return float(data['bpi']['USD']['rate'].replace(',', ''))
+    return round(float(data['bpi']['USD']['rate'].replace(',', '')), 1)  # Round to 1 decimal place
 
 # Function to update the price in the GUI
 def update_price():
-    global target_price, initial_price, prices, timestamps
+    global target_price, initial_price, prices, timestamps, target_reached
     while True:
         current_price = get_bitcoin_price()
         percent_change = ((current_price - initial_price) / initial_price) * 100 if initial_price else 0
-        price_label.config(text=f"Prețul curent al Bitcoin: ${current_price:.2f}", fg='lime')
+        price_label.config(text=f"Prețul curent al Bitcoin: ${current_price:.1f}", fg='lime')
         percent_label.config(text=f"Schimbare: {percent_change:.2f}%", fg='lime')
         
         if target_price is not None:
             difference_to_target = target_price - current_price
             if difference_to_target > 0:
-                target_label.config(text=f"Prețul trebuie să crească cu ${difference_to_target:.2f} ({(difference_to_target / current_price) * 100:.2f}%) pentru a ajunge la ${target_price:.2f}.", fg='lime')
+                target_label.config(text=f"Prețul trebuie să crească cu ${difference_to_target:.1f} ({(difference_to_target / current_price) * 100:.2f}%) pentru a ajunge la ${target_price:.1f}.", fg='lime')
             elif difference_to_target < 0:
-                target_label.config(text=f"Prețul trebuie să scadă cu ${-difference_to_target:.2f} ({(-difference_to_target / current_price) * 100:.2f}%) pentru a ajunge la ${target_price:.2f}.", fg='lime')
+                target_label.config(text=f"Prețul trebuie să scadă cu ${-difference_to_target:.1f} ({(-difference_to_target / current_price) * 100:.2f}%) pentru a ajunge la ${target_price:.1f}.", fg='lime')
             else:
-                target_label.config(text=f"Prețul este exact la ${target_price:.2f}!", fg='lime')
+                if not target_reached:  # Check if the target has not been reached yet
+                    messagebox.showinfo("Informație", "Prețul țintă a fost atins!")
+                    target_reached = True  # Set the flag to indicate the target has been reached
+                    target_label.config(text="")  # Clear the target message
+                    target_price = None  # Reset target price to allow new input
 
         # Update the chart data
         prices.append(current_price)
@@ -62,13 +66,21 @@ def update_chart():
 
 # Function to set the target price
 def set_target():
-    global target_price, initial_price
+    global target_price, initial_price, target_reached
     try:
-        target_price = float(target_entry.get())
+        target_price = round(float(target_entry.get()), 1)  # Round target price to 1 decimal place
         initial_price = get_bitcoin_price()
-        messagebox.showinfo("Informație", f"Prețul țintă setat: ${target_price:.2f}\nPrețul inițial al Bitcoin: ${initial_price:.2f}")
+        target_reached = False  # Reset the target reached flag
+        messagebox.showinfo("Informație", f"Prețul țintă setat: ${target_price:.1f}\nPrețul inițial al Bitcoin: ${initial_price:.1f}")
     except ValueError:
         messagebox.showerror("Eroare", "Te rog introdu un număr valid pentru prețul țintă.")
+
+# Initialize global variables
+target_price = None
+initial_price = None
+prices = []
+timestamps = []
+target_reached = False  # Flag to check if the target price has been reached
 
 # Initialize the main window
 root = tk.Tk()
@@ -87,10 +99,10 @@ target_entry = tk.Entry(root, bg='black', fg='lime', insertbackground='lime')  #
 target_entry.pack(pady=(5, 10))  # Add padding for spacing
 
 # Create a button with a black background and black text
-set_button = tk.Button(root, text="Setează Prețul Țintă", command=set_target, bg='black', fg='black', borderwidth=2, relief='solid', highlightbackground='black')
+set_button = tk.Button(root, text="Setează Prețul Țintă", command=set_target, bg='black', fg='lime', borderwidth=2, relief='solid', highlightbackground='black')
 set_button.pack(pady=(5, 10))  # Add padding for spacing
 
-price_label = tk.Label(root, text="Prețul curent al Bitcoin: $0.00", bg='black', fg='lime')
+price_label = tk.Label(root, text="Prețul curent al Bitcoin: $0.0", bg='black', fg='lime')
 price_label.pack(pady=(5, 0))
 
 percent_label = tk.Label(root, text="Schimbare: 0.00%", bg='black', fg='lime')
@@ -98,12 +110,6 @@ percent_label.pack(pady=(5, 0))
 
 target_label = tk.Label(root, text="", bg='black', fg='lime')
 target_label.pack(pady=(5, 0))
-
-# Initialize global variables
-target_price = None
-initial_price = None
-prices = []
-timestamps = []
 
 # Create a frame for the chart
 chart_frame = tk.Frame(root)
