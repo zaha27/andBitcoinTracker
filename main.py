@@ -86,12 +86,9 @@ target_label.pack(pady=(10, 0))  # Add padding for spacing
 target_entry = tk.Entry(root, bg='black', fg='lime', insertbackground='lime')  # Set entry field background and text color
 target_entry.pack(pady=(5, 10))  # Add padding for spacing
 
-# Create a button with a black background and neon green text
-set_button = tk.Button(root, text="Setează Prețul Țintă", command=set_target, bg='black', fg='lime', borderwidth=2, relief='solid')
+# Create a button with a black background and black text
+set_button = tk.Button(root, text="Setează Prețul Țintă", command=set_target, bg='black', fg='black', borderwidth=2, relief='solid', highlightbackground='black')
 set_button.pack(pady=(5, 10))  # Add padding for spacing
-
-# Set the button's highlight properties to simulate a black border
-set_button.config(highlightbackground='black', highlightcolor='black', highlightthickness=2)
 
 price_label = tk.Label(root, text="Prețul curent al Bitcoin: $0.00", bg='black', fg='lime')
 price_label.pack(pady=(5, 0))
