@@ -29,10 +29,13 @@ def update_price():
                 messagebox.showinfo("Informație", f"Prețul '{details['name']}' a trecut peste prețul țintă: ${target_price:.1f}!")
                 details['alerted_above'] = True  # Set the flag to indicate the alert has been triggered
                 details['alerted_below'] = False  # Reset the below alert flag
+                details['has_exceeded'] = True  # Mark that the target has been exceeded
             elif current_price < target_price and not details['alerted_below']:
-                messagebox.showinfo("Informație", f"Prețul '{details['name']}' a scăzut sub prețul țintă: ${target_price:.1f}!")
-                details['alerted_below'] = True  # Set the flag to indicate the alert has been triggered
-                details['alerted_above'] = False  # Reset the above alert flag
+                # Only notify if the target has been exceeded
+                if details.get('has_exceeded', False):
+                    messagebox.showinfo("Informație", f"Prețul '{details['name']}' a scăzut sub prețul țintă: ${target_price:.1f}!")
+                    details['alerted_below'] = True  # Set the flag to indicate the alert has been triggered
+                    details['alerted_above'] = False  # Reset the above alert flag
             
             # Calculate the difference to target price
             difference_to_target = target_price - current_price
@@ -85,7 +88,7 @@ def set_target():
             messagebox.showerror("Eroare", "Te rog introdu un nume valid pentru alertă.")
             return
         initial_price = get_bitcoin_price()
-        target_prices[target_price] = {'name': alert_name, 'alerted_above': False, 'alerted_below': False}  # Add new target price with alert status
+        target_prices[target_price] = {'name': alert_name, 'alerted_above': False, 'alerted_below': False, 'has_exceeded': False}  # Add new target price with alert status
         
         # Skip the first notification
         if not first_notification:
@@ -109,6 +112,26 @@ def update_alert_table():
         difference_to_target = target_price - current_price
         percent_change = (difference_to_target / target_price) * 100 if target_price != 0 else 0
         alert_table.insert("", "end", values=(details['name'], f"${target_price:.1f}", f"{percent_change:.2f}%"))
+
+# Function to delete the selected alert
+def delete_alert():
+    selected_item = alert_table.selection()
+    if not selected_item:
+        messagebox.showwarning("Atenție", "Te rog selectează o alertă pentru a o șterge.")
+        return
+
+    # Get the selected alert's name
+    item = selected_item[0]
+    alert_name = alert_table.item(item, 'values')[0]
+
+    # Find and delete the corresponding target price from the dictionary
+    for target_price in list(target_prices.keys()):
+        if target_prices[target_price]['name'] == alert_name:
+            del target_prices[target_price]
+            break
+
+    alert_table.delete(item)  # Remove the selected item from the Treeview
+    messagebox.showinfo("Informație", f"Alertele '{alert_name}' au fost șterse.")
 
 # Initialize global variables
 target_prices = {}  # Dictionary to hold target prices and their alert statuses
@@ -143,6 +166,10 @@ alert_name_entry.pack(pady=(5, 10))  # Add padding for spacing
 # Create a button with a black background and black text
 set_button = tk.Button(root, text="Setează Prețul Țintă", command=set_target, bg='black', fg='lime', borderwidth=2, relief='solid', highlightbackground='black')
 set_button.pack(pady=(5, 10))  # Add padding for spacing
+
+# Create a button to delete the selected alert
+delete_button = tk.Button(root, text="Șterge Alerte", command=delete_alert, bg='black', fg='lime', borderwidth=2, relief='solid', highlightbackground='black')
+delete_button.pack(pady=(5, 10))  # Add padding for spacing
 
 price_label = tk.Label(root, text="Prețul curent al Bitcoin: $0.0", bg='black', fg='lime')
 price_label.pack(pady=(5, 0))
