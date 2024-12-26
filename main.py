@@ -15,7 +15,7 @@ def get_bitcoin_price():
 
 # Function to update the price in the GUI
 def update_price():
-    global target_price, initial_price, prices, timestamps, target_reached
+    global target_price, initial_price, prices, timestamps, alerted_above, alerted_below
     while True:
         current_price = get_bitcoin_price()
         percent_change = ((current_price - initial_price) / initial_price) * 100 if initial_price else 0
@@ -23,17 +23,14 @@ def update_price():
         percent_label.config(text=f"Schimbare: {percent_change:.2f}%", fg='lime')
         
         if target_price is not None:
-            difference_to_target = target_price - current_price
-            if difference_to_target > 0:
-                target_label.config(text=f"Prețul trebuie să crească cu ${difference_to_target:.1f} ({(difference_to_target / current_price) * 100:.2f}%) pentru a ajunge la ${target_price:.1f}.", fg='lime')
-            elif difference_to_target < 0:
-                target_label.config(text=f"Prețul trebuie să scadă cu ${-difference_to_target:.1f} ({(-difference_to_target / current_price) * 100:.2f}%) pentru a ajunge la ${target_price:.1f}.", fg='lime')
-            else:
-                if not target_reached:  # Check if the target has not been reached yet
-                    messagebox.showinfo("Informație", "Prețul țintă a fost atins!")
-                    target_reached = True  # Set the flag to indicate the target has been reached
-                    target_label.config(text="")  # Clear the target message
-                    target_price = None  # Reset target price to allow new input
+            if current_price > target_price and not alerted_above:
+                messagebox.showinfo("Informație", "Prețul a trecut peste prețul țintă!")
+                alerted_above = True  # Set the flag to indicate the alert has been triggered
+                alerted_below = False  # Reset the below alert flag
+            elif current_price < target_price and not alerted_below:
+                messagebox.showinfo("Informație", "Prețul a scăzut sub prețul țintă!")
+                alerted_below = True  # Set the flag to indicate the alert has been triggered
+                alerted_above = False  # Reset the above alert flag
 
         # Update the chart data
         prices.append(current_price)
@@ -66,11 +63,12 @@ def update_chart():
 
 # Function to set the target price
 def set_target():
-    global target_price, initial_price, target_reached
+    global target_price, initial_price, alerted_above, alerted_below
     try:
         target_price = round(float(target_entry.get()), 1)  # Round target price to 1 decimal place
         initial_price = get_bitcoin_price()
-        target_reached = False  # Reset the target reached flag
+        alerted_above = False  # Reset the alert flags
+        alerted_below = False
         messagebox.showinfo("Informație", f"Prețul țintă setat: ${target_price:.1f}\nPrețul inițial al Bitcoin: ${initial_price:.1f}")
     except ValueError:
         messagebox.showerror("Eroare", "Te rog introdu un număr valid pentru prețul țintă.")
@@ -80,7 +78,8 @@ target_price = None
 initial_price = None
 prices = []
 timestamps = []
-target_reached = False  # Flag to check if the target price has been reached
+alerted_above = False  # Flag to check if the price has crossed above the target
+alerted_below = False  # Flag to check if the price has crossed below the target
 
 # Initialize the main window
 root = tk.Tk()
